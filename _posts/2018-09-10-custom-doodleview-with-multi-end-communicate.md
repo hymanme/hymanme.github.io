@@ -1,10 +1,10 @@
 ---
 layout: post
-title: Android 实现实时多端白板通信
+title: Android 实现实时白板绘制及多端绘制同步
 summary: 本篇主要介绍最近项目中实现的一个多端白板绘制的功能，适用于多终端实时绘制路径，并能互相同步数据，实现一个多端同步白板。主要涉及到自定义 View，数据传输的封装，异步数据处理，底层数据同步等。
 date: 2018-09-10 22:39:08
 categories: Android
-tags: [Android, DoodleView, Translate]
+tags: [Android, DoodleView, CustomView]
 featured-img: bottle
 ---
 
@@ -38,20 +38,20 @@ featured-img: bottle
 考虑到需要进行多个端绘制与操作实时同步，那就避免不了进行对数据结构的确定与封装。保证不同的端在发送数据与接收数据使用的相同的数据协议，这样才能准确的发送和还原指令，这里的指令包含划线、缩放、移动、撤销与反撤销和清屏等。所以必须先确定好包含所有可使用指令的数据包要如何封装。有一下几个问题：
 
 1. 用什么数据结构？
-    
+  
 
     自定义、xml、json、protobuf？
 2. 需要哪些字段？
-    
+  
 
     指令类型、指令内容、指令时间？
 3. 线条路径如何表示？
-    
+  
 
     一连串点的坐标？
 4. 用什么库来编码与解码数据包？
-    
-    
+  
+  
     xml：DOM、SAX、PULL
     json：Gson、FastJson、Jackson
     protobuf：protobuf
@@ -84,7 +84,7 @@ featured-img: bottle
 
 ### 数据封装
 1. 首先将指令类型确定下来，指令类型即整个模块可以传递的操作
-    
+  
     
 ```java
  public interface ActionStep {
@@ -342,39 +342,40 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
      */
     public class DoodleView extends SurfaceView implements SurfaceHolder.Callback, IDoodleCallback, Runnable, TransactionObserver, LifecycleObserver {
         private static final String TAG = DoodleView.class.getSimpleName();
-
+    
         /******************************常量*************************************/
         private static final float MAX_SCALE = 6f;
         private static final float MIN_SCALE = 0.1f;
         private static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
-
+    
         /******************************参数*************************************/
-
+    
         private long mDrawDelayTime = 0;
         private int mCanvasBackgroundColor = DEFAULT_BACKGROUND_COLOR;
         
         private long mCurrentDrawDelayTime = mDrawDelayTime;
         protected Handler mPhotoHandler = new Handler();
         protected Easing mEasing = new Cubic();
-
+    
         //SurfaceHolder
         private SurfaceHolder mSurfaceHolder;
         private IDoodleCallback mDoodleCallback;
         private DoodleChannel mDoodleSelfChannel;//本地绘制通道
         private DoodleChannel mDoodleRemoteChannel;//远程回放通道
+    ```
 
 
         // 数据发送管理器
         private TransactionManager mTransactionManager;
-
+    
         //画笔
         private Paint mClearPaint;
-
+    
         //全局画板手势数据
         private float mTranslateX = 0.0f;//x位移
         private float mTranslateY = 0.0f;//y位移
         private float mCurrentScale = 1.0f;//当前scale
-
+    
         //手势事件
         private ScaleGestureDetector mScaleDetector;
         private GestureDetector mGestureDetector;
@@ -400,16 +401,16 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         public DoodleView(Context context) {
             this(context, null);
         }
-
+    
         public DoodleView(Context context, AttributeSet attrs) {
             this(context, attrs, 0);
         }
-
+    
         public DoodleView(Context context, AttributeSet attrs, int defStyleAttr) {
             super(context, attrs, defStyleAttr);
             init();
         }
-
+    
         /***
          * 初始化view
          */
@@ -427,14 +428,14 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
             //其他
             mClearPaint = new Paint();
             mClearPaint.setColor(Color.WHITE);
-
+    
             //手势
             mGestureListener = new GestureListener();
             mScaleListener = new ScaleListener();
             mScaleDetector = new ScaleGestureDetector(getContext(), mScaleListener);
             mGestureDetector = new GestureDetector(getContext(), mGestureListener, null, true);
         }
-
+    
         /***
          * 1. 初始化白板，数据包发送器
          */
@@ -443,7 +444,7 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
             this.mTransactionManager = new TransactionManager(channelId, getContext());
             this.mTransactionManager.registerTransactionObserver(this);
         }
-
+    
         /***
          * 2. 初始化channel，本地绘制通道
          */
@@ -457,35 +458,35 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
             this.mCurrentScale = selfChannel.getCurrentScale();
             this.mDoodleRemoteChannel = remoteChannel == null ? new DoodleChannel() : remoteChannel;
         }
-
+    
         @Override
         public void surfaceCreated(SurfaceHolder surfaceHolder) {
             mIsDrawing = true;
             new Thread(this).start();
         }
-
+    
         @Override
         public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
         }
-
+    
         @Override
         public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
             synchronized (this) {
                 mIsDrawing = false;
             }
         }
-
+    
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             if (!isEnabled()) {
                 return false;
             }
             mScaleDetector.onTouchEvent(event);
-
+    
             if (!mScaleDetector.isInProgress()) {
                 mGestureDetector.onTouchEvent(event);
             }
-
+    
             int action = event.getAction();
             switch (action & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
@@ -496,11 +497,11 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN:
                     break;
-
+    
             }
             return true;
         }
-
+    
         /**
          * IDoodleCallback
          * 退出涂鸦板时调用
@@ -512,60 +513,60 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                 mTransactionManager.end();
             }
         }
-
+    
         private float getReviseX(float input) {
             return input / mCurrentScale - mTranslateX;
         }
-
+    
         private float getReviseY(float input) {
             return (input / mCurrentScale - mTranslateY);
         }
-
+    
         /********************************手势确定***********************************/
         protected boolean onDown(MotionEvent e) {
             //...
             return true;
         }
-
+    
         protected boolean onUp(MotionEvent e) {
             //...
             return true;
         }
-
+    
         protected boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             //...
             return true;
         }
-
+    
         protected boolean onTranslate(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             //...
             return true;
         }
-
+    
         protected boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             //...
             return false;
         }
-
+    
         protected boolean onSingleTapUp(MotionEvent e) {
             log("onSingleTapUp");
             return true;
         }
-
+    
         protected boolean onSingleTapConfirmed(MotionEvent e) {
             //...
             return true;
         }
-
+    
         protected boolean onScale(float sx, float sy, float focusX, float focusY) {
             //...
             return true;
         }
-
+    
         private void log(String msg) {
             Log.d(TAG, "log: " + msg);
         }
-
+    
         /***
          * 子线程绘制
          */
@@ -584,7 +585,7 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                 }
             }
         }
-
+    
         /***
          * 重回
          */
@@ -606,14 +607,14 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                 if (mDoodleSelfChannel.action != null) {
                     mDoodleSelfChannel.action.onDraw(canvas);
                 }
-
+    
                 for (int i = 0; i <= mDoodleRemoteChannel.index(); i++) {
                     if (i >= mDoodleRemoteChannel.actions.size()) {
                         break;
                     }
                     mDoodleRemoteChannel.actions.get(i).onDraw(canvas);
                 }
-
+    
                 if (mDoodleRemoteChannel.action != null) {
                     mDoodleRemoteChannel.action.onDraw(canvas);
                 }
@@ -622,7 +623,7 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                 mSurfaceHolder.unlockCanvasAndPost(canvas);
             }
         }
-
+    
         /***
          * 数据包事务处理
          * 已将接收到的远程数据解压并整理成事务单元
@@ -633,33 +634,33 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         public synchronized void onTransaction(List<Transaction> transactions) {
             //...-->onMultiTransactionsDraw
         }
-
+    
         private void onMultiTransactionsDraw(List<Transaction> transactions) {
             //...
         }
-
+    
         /********************************生命周期***********************************/
-
+    
         /********************* Lifecycle ***************************/
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume() {
             log("Lifecycle:onResume");
             mCurrentDrawDelayTime = mDrawDelayTime;
         }
-
+    
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause() {
             log("Lifecycle:onPause");
             mCurrentDrawDelayTime = Integer.MAX_VALUE;
         }
-
+    
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         public void onDestroy() {
             log("Lifecycle:onDestroy");
             mIsDrawing = false;
             end();
         }
-
+    
         /********************************手势处理***********************************/
         /***
          * GestureListener
@@ -674,7 +675,7 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
             //...
         }
-
+    
         //移动
         public void scrollBy(float distanceX, float distanceY, final double durationMs) {
             //...
@@ -1280,7 +1281,7 @@ PS：其中`Agora`部分就不介绍了，官网有很多案例介绍。这里�
 ![](https://wx1.sinaimg.cn/mw690/005X6W83gy1fv5l78hvgsj30u01hcn30.jpg)
 ![](https://wx1.sinaimg.cn/mw690/005X6W83gy1fv5l7bk236j30u01hc43z.jpg)
 
-### 小小 ~~姐~~ 结
+### 小小结
 本小小结主要是介绍了数据包的管理以及发送，还是遵循单一原则理念，将任务分发给特定的类来处理，而不是一股脑堆一起。从数据包处理，整合到最终的`json`数据的发送，一层一层向下推进。
 
 ## 如何使用
