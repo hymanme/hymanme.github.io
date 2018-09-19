@@ -1,0 +1,72 @@
+---
+layout: compress
+---
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en-US" }}">
+
+  {% include head.html %}
+
+  <body class="site">
+
+    {% if site.google_tag_manager %}
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ site.google_tag_manager }}"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    {% endif %}
+
+    {% include header.html %}
+
+    <div class="hero--small">
+      <div class="hero__wrap">
+        <h1 class="hero__title">{{ page.title }}</h1>
+      </div>
+    </div>
+    <main class="site__content">
+
+      <div class="container">
+        <div class="page-content">
+
+          {{ content }}
+
+        </div>
+      </div>
+
+    </main>
+    
+    {% include footer.html %}
+
+    <script type="text/javascript" charset="utf-8">
+      url_mapper = {
+        "/2016/12/24/hymane_20161224_custom_camera_foucs_view/": "/custom-camera-foucs-view/",
+        "/2016/12/03/hymane_20161204_how_to_controll_recyclerview/": "/android-recyclerview/",
+        "/2016/11/13/hymane_20161113_qq_bubble_with_bezier/": "/qq-bubble-with-bezier/",
+        "/2016/10/09/hymane_20161010_how_to_use_vector_drawable": "/how-to-use-vector-drawable/",
+        "/2016/09/11/hymane_20160911__programmer_knows_push_library_to_jcenter/": "/programmer-knows-push-library-to-jcenter/",
+        "/2016/05/08/RecyclerView%E5%AE%8C%E7%BE%8E%E5%AE%9E%E7%8E%B0%E6%8B%96%E6%8B%BD%E3%80%81%E6%BB%91%E5%8A%A8%E5%88%A0%E9%99%A4%E4%BB%A5%E5%8F%8A%E6%92%A4%E9%94%80%E5%88%A0%E9%99%A4/": "/item-draggabl-slide-delete-revocation-with-recyclerview/"
+      };
+
+      var path = location.pathname;
+      console.log(path);
+
+      if (path in url_mapper) {
+          window.location.href = url_mapper[path]
+      } else {
+          var el = document.getElementById('time');
+          var n = 5;
+          setInterval(function() {
+              n = n - 1;
+              if (n == 0) {
+                  window.location.href = '/'
+              } else {
+                  el.innerHTML = n
+              }
+          }, 1000)
+      }
+    </script>
+
+  </body>
+
+</html>
