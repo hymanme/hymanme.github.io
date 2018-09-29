@@ -9,7 +9,7 @@ featured-img: swing
 ---
 ## www 转发并强制 https 访问
 
-我们经常需要通过省略`www`直接访问主页，比通过 hymane.com 访问 www.hymane.com。其实很简单，server_name 将两个域名全部配置，然后再通过 301 重定向到 https 443端口，或者使用 rewrite 重写到 https 站点，如下：
+我们经常需要通过省略`www`直接访问主页，比通过 hymane.com 访问 www.hymane.com 其实很简单，server_name 将两个域名全部配置，然后再通过 301 重定向到 https 443端口，或者使用 rewrite 重写到 https 站点，如下：
 
 ```bash
 server {
