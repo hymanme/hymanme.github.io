@@ -84,8 +84,7 @@ featured-img: bottle
 
 ### 数据封装
 1. 首先将指令类型确定下来，指令类型即整个模块可以传递的操作
-  
-    
+
 ```java
  public interface ActionStep {
     byte START = 1;//画笔路径开始
@@ -102,6 +101,7 @@ featured-img: bottle
 }
 ```
 各个指令的作用注释里面已经讲的很清楚了，不再赘述。
+
 2. 封装最小数据包结构
 
 
@@ -362,10 +362,7 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         private IDoodleCallback mDoodleCallback;
         private DoodleChannel mDoodleSelfChannel;//本地绘制通道
         private DoodleChannel mDoodleRemoteChannel;//远程回放通道
-    ```
-
-
-        // 数据发送管理器
+          // 数据发送管理器
         private TransactionManager mTransactionManager;
     
         //画笔
@@ -381,8 +378,6 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         private GestureDetector mGestureDetector;
         private GestureDetector.OnGestureListener mGestureListener;
         private ScaleGestureDetector.OnScaleGestureListener mScaleListener;
-
-
         //是否可滑动
         private boolean mScrollEnabled = true;
         //是否支持双击操作
@@ -392,12 +387,8 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
         private int mDoubleTapDirection;
         private boolean onMoving;
         private boolean shouldFling;
-
-
         private boolean mIsDrawing = false;
         private byte colorIndex = 0;
-
-
         public DoodleView(Context context) {
             this(context, null);
         }
@@ -577,6 +568,8 @@ Transaction{timestamp=11, step=1, x=3.0, y=4.0, color=0, size=5}
                     reDraw();
                 }
                 if (mCurrentDrawDelayTime != 0) {
+                    //本处由于方便使用的是定时(不准确的定时)刷新，可改成按需刷新，
+                    //也就是需要刷新页面的时候再刷新
                     try {
                         Thread.sleep(mCurrentDrawDelayTime);
                     } catch (InterruptedException e) {
@@ -695,6 +688,7 @@ setZOrderMediaOverlay(true);
 ```
 * TransactionManager 是数据包管理器，前面也有介绍过，用来处理数据包的装包解包以及发送的工作，后面会详细介绍。
 * 橡皮擦用的是白色画笔简单代替，这样在配合两个通道进行重回时会出现之前的绘制路径覆盖当前绘制路径的问题。考虑优化，嘿嘿嘿。
+* `run`方法里面使用的是`sleep`等待指定时间再次刷新，此种方式有一个弊端就是在 ui 未发生任何更改时毅然刷新，浪费性能，可改成按需更新，但是既要在各个需要更新地方埋点，执行刷新。另一点，此处的`sleep`方法延迟时间需要考虑肉眼60帧的流畅度，也就是16毫秒就需要刷新一帧，那么这里的延迟时间需要考虑到这一点。
 
 3. 绘制通道
 
