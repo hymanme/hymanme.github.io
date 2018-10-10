@@ -8,15 +8,13 @@ tags: [Android, JniLib, so lib]
 featured-img: stones
 ---
 
-[TOC]
-
 本篇文章介绍 Android 开发中如何动态加载 jniLib，也就是动态加载 native 的 so 库文件，以及介绍了关于 CPU、微架构、指令集、android Abi 选择、动态加载 jniLib 相对于静态加载的优缺点等。最终以一个实例实现动态 jniLib 的加载。
 
 ## CPU、核心、微架构、指令集、ABI
 
 >  在进入主题之前，先让我们了解几个专有名词肯定是大有裨益的，当然你也可以直接跳过本节直接进入主题。
 
-CPU 想必很好理解，即中央处理器，主要用来处理一些计算密集型的任务。而且单个 CPU 可以同时进行多个任务，多个任务实际上并不是真的同时执行，要靠 CPU 高速调度几个任务，顺序执行，只是速度太快，我们感觉是在同时执行，但是多任务之间调度会影响到性能。随着技术飞速发展，出现了多核心 CPU，其实 CPU 主要就是考得核心在工作，多个核心即可实现真正意义上的同时处理任务。
+CPU 想必很好理解，即中央处理器，主要用来处理一些计算密集型的任务。而且单个 CPU 可以同时进行多个任务，多个任务实际上并不是真的同时执行，要靠 CPU 高速调度几个任务，顺序执行，只是速度太快，我们感觉是在同时执行，但是多任务之间调度会影响到性能。随着技术飞速发展，出现了多核心 CPU，其实 CPU 主要就是靠得核心在工作，多个核心即可实现真正意义上的同时处理任务。
 
 CPU 执行计算任务时都需要遵从一定的规范，程序在被执行前都需要先翻译为 CPU 可以理解的语言。这种规范或语言就是指令集（ISA，Instruction Set Architecture）。程序被按照某种指令集的规范翻译为 CPU 可识别的底层代码的过程叫做编译（compile）。常见的指令集有 x86、ARM、MIPS 等，其中指令集可以扩展，比如 x86 指令集可以增加 64 位支持，就变成 x86_64，同理 ARM 可以扩展成 arm64-v8a，MIPS 可以扩展为 MIPS64。
 
@@ -275,7 +273,7 @@ CPU 执行计算任务时都需要遵从一定的规范，程序在被执行前�
 6. 调用 native 方法验证
 
    ```java
-   /***
+   	/***
         * 初始化sdk
         */
        private void start() {
@@ -328,7 +326,7 @@ CPU 执行计算任务时都需要遵从一定的规范，程序在被执行前�
 
    当验证工作未出现异常，且打印出`onMessageChannelReceive`日志即表示动态加载成功。
 
-**PS**：注意点，通过以上你可能会发现会奔溃，错误为：
+**PS**：注意一点，通过以上你可能会发现会崩溃，错误为：
 
 ```java
 2018-10-09 00:48:25.842 9384-9384/com.hymane.dynamicloadso E/AndroidRuntime: FATAL EXCEPTION: main
@@ -377,7 +375,7 @@ public class NativeAgoraAPI implements IAgoraAPI {
 
 ```java
 static {
-        System.loadLibrary("agora-sig-sdk-jni");
+  	System.loadLibrary("agora-sig-sdk-jni");
 }
 ```
 
@@ -393,8 +391,8 @@ static {
 
 ## 参考
 
-* https://developer.android.com/ndk/guides/abis
-* https://zhuanlan.zhihu.com/p/19893066
-* http://www.ywnds.com/?p=3561
-* http://honghui.github.io/blog/20160311/android-xi-tong-ru-he-xuan-ze-native-so.html
-* https://blog.csdn.net/aqi00/article/details/72763742
+* [https://developer.android.com/ndk/guides/abis](https://developer.android.com/ndk/guides/abis)
+* [https://zhuanlan.zhihu.com/p/19893066](https://zhuanlan.zhihu.com/p/19893066)
+* [http://www.ywnds.com/?p=3561](http://www.ywnds.com/?p=3561)
+* [http://honghui.github.io/blog/20160311/android-xi-tong-ru-he-xuan-ze-native-so.html](http://honghui.github.io/blog/20160311/android-xi-tong-ru-he-xuan-ze-native-so.html)
+* [https://blog.csdn.net/aqi00/article/details/72763742](https://blog.csdn.net/aqi00/article/details/72763742)
