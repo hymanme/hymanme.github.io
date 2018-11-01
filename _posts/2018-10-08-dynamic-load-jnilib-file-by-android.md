@@ -352,7 +352,7 @@ CPU 执行计算任务时都需要遵从一定的规范，程序在被执行前�
         at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:858)
 ```
 
-以上错误可以看出，是在指定目录（默认 app 私有空间）下未找到我们的 so 文件，我们明明手动加载了自己下载的 so 文件了，为了没有生效？
+以上错误可以看出，是在指定目录（默认 app 私有空间）下未找到我们的 so 文件，我们明明手动加载了自己下载的 so 文件了，为什么没有生效？
 
 这个问题主要是 agora sdk 初始化的时候已经加载了一次 so 文件，查看`agora-sig-sdk.jar`文件中源码可以发现，`NativeAgoraAPI`如下：
 
