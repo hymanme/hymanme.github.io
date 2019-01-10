@@ -22,7 +22,7 @@ social:
 navigation: # Navigation links
   - {name: 'Home', link: '/'}
   - {name: 'Categories', link: '/categories'}
-  - {name: 'Links', link: '/links'}
+  - {name: 'Library', link: '/library'}
   - {name: 'About', link: '/about'}
   - {name: 'Résumé', link: '/assets/Résumé.pdf'}
 
